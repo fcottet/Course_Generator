@@ -1,0 +1,23 @@
+# Directories #
+build/classes/**
+bin/**
+target/**
+
+*.class
+
+
+##########
+# WINDOWS
+##########
+
+Thumbs.db
+Desktop.ini
+
+##########
+# OS X
+##########
+
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes

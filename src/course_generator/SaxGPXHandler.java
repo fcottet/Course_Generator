@@ -18,18 +18,21 @@
 
 package course_generator;
 
-import course_generator.utils.CgConst;
 import java.io.File;
 import java.io.IOException;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+
+import course_generator.utils.CgConst;
 
 /**
  *
@@ -159,7 +162,8 @@ public class SaxGPXHandler extends DefaultHandler{
     public void startElement(String uri, String localname, String qName, Attributes attributs) throws SAXException {
         if (qName.equalsIgnoreCase("GPX")) {
             level++;
-            for (int index = 0; index < attributs.getLength(); index++) { // on parcourt la liste des attributs
+            // Check all the attributes
+            for (int index = 0; index < attributs.getLength(); index++) { 
                 if (attributs.getLocalName(index).equalsIgnoreCase("VERSION")) {
                     try {
                         gpx_version=Double.parseDouble(attributs.getValue(index));
@@ -233,49 +237,40 @@ public class SaxGPXHandler extends DefaultHandler{
         }
         else if ((level==LEVEL_TRK) && qName.equalsIgnoreCase("NAME")) {
             trk_name=characters;
+            characters="";
         }
         else if ((level==LEVEL_TRKPT) && qName.equalsIgnoreCase("NAME")) {
             trkpt_name=characters;
+            characters="";
         }        
         else if ((level==LEVEL_TRKPT) && qName.equalsIgnoreCase("ELE")) {
             try {
                 trkpt_ele=Double.parseDouble(characters);
+                characters="";
             }
             catch (NumberFormatException e) {
                 trkpt_ele=0.0;
                 errcode=ERR_READ_ELE;
                 errline=locator.getLineNumber();
+                characters="";
             } 
         }        
         else if ((level==LEVEL_TRKPT) && qName.equalsIgnoreCase("TIME")) {
             try {
-                
-                
-                
                 if (first) {
-                    //TimeZone zone = TimeZone.CurrentTimeZone;
-                    // Get offset.
-                    //TimeSpan offset = zone.GetUtcOffset(DateTime.Now);
-
                     first = false;
                     trkpt_time=DateTime.parse(characters);
-                    //dt = TimeZone.CurrentTimeZone.ToLocalTime(dt);
                     StartTime = trkpt_time;
                     old_time=StartTime;
                     Time_s = 0;
                     dTime_f = 0.0;
+                    characters="";
                 }
                 else {
                     trkpt_time=DateTime.parse(characters);
-                    //dt1 = TimeZone.CurrentTimeZone.ToLocalTime(dt1);
-                    //Interval interval = new Interval(StartTime, trkpt_time);
-                    //TimeSpan tsdt = dt - StartTime;
-                    //time = (int)tsdt.TotalSeconds;
-                    //Time_s=(int) (interval.toDurationMillis() / 1000);
                     Time_s=(int) ((new Interval(StartTime, trkpt_time)).toDurationMillis()/1000);
                     dTime_f=((new Interval(old_time, trkpt_time)).toDurationMillis()/1000.0);
-                    
-                    //dTime_f= (interval.toDurationMillis() / 1000.0);
+                    characters="";
                 }
                 trkdata.isTimeLoaded = true;            
             }
@@ -284,6 +279,7 @@ public class SaxGPXHandler extends DefaultHandler{
                 trkpt_time=new DateTime(1970,1,1,0,0,0);
                 errcode=ERR_READ_TIME;
                 errline=locator.getLineNumber();
+                characters="";
             }
         }        
         else if (((level==LEVEL_TRKPT)) && qName.equalsIgnoreCase("TRKPT")) {
@@ -321,7 +317,7 @@ public class SaxGPXHandler extends DefaultHandler{
                             CgConst.MRBOPT_SEL | CgConst.MRBOPT_LEFT | CgConst.MRBOPT_SHOWTAGS, //int OptionMiniRoadbook
                             0, //int VPosMiniRoadbook
                             "", //String CommentMiniRoadbook
-                            10 //int FontSizeMiniRoadbook
+                            CgConst.DEFAULTMRBFONTSIZE //int FontSizeMiniRoadbook
                         ) 
                     );
                 }
@@ -341,10 +337,10 @@ public class SaxGPXHandler extends DefaultHandler{
                             0.0, //double Slope
                             0.0, //double Speed
                             0.0, //double dElevation
-                            Time_s, //int Time //Temps total en seconde
-                            dTime_f, //double dTime_f  //temps de parcours du tronçon en seconde (avec virgule)
-                            0, //int TimeLimit //Barrière horaire
-                            trkpt_time, //DateTime Hour //Contient la date et l'heure de passage
+                            Time_s, //int Time
+                            dTime_f, //double dTime_f
+                            0, //int TimeLimit
+                            trkpt_time, //DateTime Hour
                             0, //int Station
                             "", //String Name
                             "", //String Comment
@@ -354,7 +350,7 @@ public class SaxGPXHandler extends DefaultHandler{
                             CgConst.MRBOPT_SEL | CgConst.MRBOPT_LEFT | CgConst.MRBOPT_SHOWTAGS, //int OptionMiniRoadbook
                             0, //int VPosMiniRoadbook
                             "", //String CommentMiniRoadbook
-                            10 //int FontSizeMiniRoadbook
+                            CgConst.DEFAULTMRBFONTSIZE //int FontSizeMiniRoadbook
                         ) 
                     );
                 } //else

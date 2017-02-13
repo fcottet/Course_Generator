@@ -34,6 +34,7 @@
  * - Test the import
  *  
  * TODO:
+ * - Utils.CalcDistance calculate the distance between 2 points without the elevation. Something is done after?
  * - Move the track info on the a bottom line and add the curve name on this line
  * - Application icon
  * - About dialog
@@ -119,14 +120,15 @@ import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import course_generator.TrackData.CalcAvrSlopeResult;
 import course_generator.TrackData.CalcAvrSpeedResult;
 import course_generator.TrackData.CalcClimbResult;
-import course_generator.dialogs.frmFillDiff;
 import course_generator.dialogs.FrmImportChoice;
 import course_generator.dialogs.frmEditPosition;
 import course_generator.dialogs.frmFillCoeff;
 import course_generator.dialogs.frmFillCoeff.EditCoeffResult;
+import course_generator.dialogs.frmFillDiff;
+import course_generator.dialogs.frmFillDiff.EditDiffResult;
 import course_generator.dialogs.frmSearchPoint;
 import course_generator.dialogs.frmTrackSettings;
-import course_generator.dialogs.frmFillDiff.EditDiffResult;
+import course_generator.mrb.FrmMiniroadbook;
 import course_generator.param.frmEditCurve;
 import course_generator.resume_table.ResumeAvgSlopeNClass;
 import course_generator.resume_table.ResumeAvgSlopeNRenderer;
@@ -174,6 +176,7 @@ import course_generator.resume_table.ResumedtTimeClass;
 import course_generator.resume_table.ResumedtTimeRenderer;
 import course_generator.settings.CgSettings;
 import course_generator.settings.frmSettings;
+import course_generator.tiles.opentopomap.OpenTopoMap;
 import course_generator.tiles.thunderforest.Thunderforest_Outdoors;
 import course_generator.trackdata_table.CoeffClass;
 import course_generator.trackdata_table.CoeffRenderer;
@@ -208,7 +211,6 @@ import course_generator.utils.FileTypeFilter;
 import course_generator.utils.OsCheck;
 import course_generator.utils.Utils;
 import course_generator.utils.Utils.CalcLineResult;
-import sun.java2d.loops.DrawParallelogram;
 
 /**
  * This is the main class of the project.
@@ -216,8 +218,7 @@ import sun.java2d.loops.DrawParallelogram;
  * @author pierre.delore
  */
 public class frmMain extends javax.swing.JFrame {
-	private final String Version = "4.0.0.Alpha1";
-//	private FileFilter GPX_Filter;
+	private final String Version = "4.0.0.ALPHA 4";
 	public TrackData Track;
 	private ResumeData Resume;
 	private final TrackDataModel ModelTableMain;
@@ -231,7 +232,7 @@ public class frmMain extends javax.swing.JFrame {
 	private java.util.ResourceBundle bundle = null;
 	private int cmptInternetConnexion = 0;
 	private boolean InternetConnectionActive = false;
-	private Timer timer1s; // 1 seconde timer object
+	private Timer timer1s; // 1 second timer object
 
 	/**
 	 * Creates new form frmMain
@@ -374,7 +375,7 @@ public class frmMain extends javax.swing.JFrame {
 		dataset = new XYSeriesCollection();
 		// dataset = CreateDataset();
 		chart = CreateChartProfil(dataset);
-
+		
 		// -- Load configuration
 		LoadConfig();
 
@@ -424,12 +425,14 @@ public class frmMain extends javax.swing.JFrame {
 
 		// -- Configure the tile source for the map
 		MapViewer.setTileSource(new Thunderforest_Outdoors());
+		//TODO Switch to OpenTopomap
+		//MapViewer.setTileSource(new OpenTopoMap());
 
 		// -- Set the counter in order near the end in order to start the
 		// connection test
 		cmptInternetConnexion = Settings.ConnectionTimeout - 1;
 
-		// -- Start the 1 seconde timer
+		// -- Start the 1 second timer
 		timer1s = new Timer(1000, new TimerActionListener());
 		timer1s.start();
 
@@ -953,7 +956,7 @@ public class frmMain extends javax.swing.JFrame {
 		mnuGenerateRoadbook.setText(bundle.getString("frmMain.mnuGenerateRoadbook.text"));
 		mnuGenerateRoadbook.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				// mnuSaveCGXActionPerformed(evt); //TODO
+				//TODO
 			}
 		});
 		mnuGenerateRoadbook.setEnabled(false);
@@ -962,16 +965,15 @@ public class frmMain extends javax.swing.JFrame {
 		// -- Mini roadbook
 		// -----------------------------------------------------
 		mnuGenerateMiniRoadbook = new javax.swing.JMenuItem();
-		mnuGenerateMiniRoadbook.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F8, 0));
+		mnuGenerateMiniRoadbook.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F4, 0));
 		mnuGenerateMiniRoadbook
 				.setIcon(new javax.swing.ImageIcon(getClass().getResource("/course_generator/images/profil.png")));
 		mnuGenerateMiniRoadbook.setText(bundle.getString("frmMain.mnuGenerateMiniRoadbook.text"));
 		mnuGenerateMiniRoadbook.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				// mnuSaveCGXActionPerformed(evt); //TODO
+				ShowMRB();
 			}
 		});
-		mnuGenerateMiniRoadbook.setEnabled(false);
 		mnuDisplay.add(mnuGenerateMiniRoadbook);
 
 		// -- Separator
@@ -1628,7 +1630,7 @@ public class frmMain extends javax.swing.JFrame {
 		btMiniRoadbook.setFocusable(false);
 		btMiniRoadbook.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
-//				EditSSCurves();
+				ShowMRB();
 			}
 		});
 		ToolBarMain.add(btMiniRoadbook);
@@ -1777,6 +1779,32 @@ public class frmMain extends javax.swing.JFrame {
 		ToolBarMain.add(btCalculateTrackTime);
 
 	}
+
+	
+	/**
+	 * Display the mini roadbook
+	 */
+	protected void ShowMRB() {
+		if (Track.data.isEmpty())
+			return;
+		
+		FrmMiniroadbook frm = new FrmMiniroadbook(Settings);
+		frm.showDialog(Track);
+//		if (res.Valid)  {
+//			for(int i=res.Start; i<=res.End;i++) {
+//				Track.data.get(i).setDiff(res.Difficulty);
+//			}
+//
+//			Track.isCalculated=false;
+//			Track.isModified=true;
+//			RefreshTableMain();
+//			RefreshProfil();
+//			RefreshStatusbar(Track);
+//		}
+	}
+
+
+
 
 	protected void TrackSettings() {
 		if (Track.data.size() <= 0)
@@ -2765,10 +2793,10 @@ public class frmMain extends javax.swing.JFrame {
 		}
 		dataset.addSeries(serie1);
 
-		if (Track.MaxElev > Track.MinElev) {
+		if (Track.getMaxElev(Settings.Unit) > Track.getMinElev(Settings.Unit)) {
 			XYPlot plot = chart.getXYPlot();
 			ValueAxis axisY = plot.getRangeAxis();
-			axisY.setRange(Math.floor(Track.MinElev / 100.0) * 100.0, Math.ceil(Track.MaxElev / 100.0) * 100.0);
+			axisY.setRange(Math.floor(Track.getMinElev(Settings.Unit) / 100.0) * 100.0, Math.ceil(Track.getMaxElev(Settings.Unit) / 100.0) * 100.0);
 		}
 	}
 
@@ -3228,7 +3256,10 @@ public class frmMain extends javax.swing.JFrame {
 		// MapPolygonImpl polyLine = new MapPolygonImpl(route);
 
 		// MapViewer.setTileSource(new Thunderforest_Landscape());
-		MapViewer.setTileSource(new Thunderforest_Outdoors());
+		
+		//MapViewer.setTileSource(new Thunderforest_Outdoors());
+		MapViewer.setTileSource(new OpenTopoMap());
+		
 		// MapViewer.setTileSource(new Thunderforest_Transport());
 
 		// MapViewer.setTileSource(new OsmTileSource.Mapnik());
@@ -3432,7 +3463,21 @@ public class frmMain extends javax.swing.JFrame {
 
 		// -- Zoom to display the track
 		MapViewer.setDisplayToFitMapPolygons();
-
+		
+		
+		for (CgData r : tdata.data) {
+			int t=r.getTag();
+			int v=0;
+			if ((t & CgConst.TAG_MARK)!=0)
+				v=v+1;
+			if ((t & CgConst.TAG_EAT_PT)!=0)
+				v=v+2;
+			if ((t & CgConst.TAG_WATER_PT)!=0)
+				v=v+4;
+			
+			if (v!=0) 
+				MapViewer.addMapMarker(new MapMarkerImg(new Coordinate(r.getLatitude(), r.getLongitude()), createImageIcon("images/markers_"+v+".png", "").getImage()));
+		}		
 	}
 
 	

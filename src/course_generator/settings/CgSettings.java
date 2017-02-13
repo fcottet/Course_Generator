@@ -53,6 +53,8 @@ public class CgSettings {
     public int MainWindowHeight;
     public int VertSplitPosition;
     public int HorizSplitPosition;
+    /** Mini roadbook split position **/
+    public int MRB_SplitPosition; 
     
     public int Unit = CgConst.UNIT_METER; //Unit for the display 0=meter 1=Miles/feet
     
@@ -72,6 +74,7 @@ public class CgSettings {
         MainWindowHeight=600;
         VertSplitPosition=200;
         HorizSplitPosition=50;
+        MRB_SplitPosition=220;
         
         MemoFormat = new String[5];
         mruGPX = new String[5];
@@ -170,6 +173,7 @@ public class CgSettings {
                     Utils.WriteIntToXML(writer, "MAINWINDOWSHEIGHT",MainWindowHeight);
                     Utils.WriteIntToXML(writer, "VERTSPLITPOSITION",VertSplitPosition);
                     Utils.WriteIntToXML(writer, "HORIZSPLITPOSITION",HorizSplitPosition);
+                    Utils.WriteIntToXML(writer, "MRBSPLITPOSITION",MRB_SplitPosition);
                     
                 writer.writeEndElement();
             writer.writeEndDocument();
@@ -211,14 +215,30 @@ public class CgSettings {
     public String getDistanceUnitString() {
     	switch (Unit) {
     	case CgConst.UNIT_METER:
-    		return "Km";
+    		return "km";
     	case CgConst.UNIT_MILES_FEET:
-    		return "Miles";
+    		return "miles";
     	default:
     		return "Km";    		
     	}
     }
 
+    /**
+     * Return the distance unit as string (abbreviation)
+     * @return string with the unit
+     */
+    public String getShortDistanceUnitString() {
+    	switch (Unit) {
+    	case CgConst.UNIT_METER:
+    		return "km";
+    	case CgConst.UNIT_MILES_FEET:
+    		return "mi";
+    	default:
+    		return "km";    		
+    	}
+    }
+    
+    
     /**
      * Return the elevation unit as string
      * @return string with the unit
@@ -229,6 +249,21 @@ public class CgSettings {
     		return "m";
     	case CgConst.UNIT_MILES_FEET:
     		return "feet";
+    	default:
+    		return "m";    		
+    	}
+    }
+
+    /**
+     * Return the elevation unit as string (abbreviation)
+     * @return string with the unit
+     */
+    public String getShortElevationUnitString() {
+    	switch (Unit) {
+    	case CgConst.UNIT_METER:
+    		return "m";
+    	case CgConst.UNIT_MILES_FEET:
+    		return "ft";
     	default:
     		return "m";    		
     	}
